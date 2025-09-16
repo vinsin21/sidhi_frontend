@@ -1,3 +1,5 @@
+// src/components/FilterPanel.tsx
+
 import React from 'react';
 import { SearchFilters } from '../types';
 import { Filter, X } from 'lucide-react';
@@ -23,10 +25,15 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange, jobC
       platform: 'all',
       jobType: 'all',
       experienceLevel: 'all',
-      salaryRange: 'all',
-      postedDate: 'all'
     });
   };
+
+  const platforms = [
+    { value: 'all', label: 'All Platforms' },
+    { value: 'Indeed', label: 'Indeed' },
+    { value: 'LinkedIn', label: 'LinkedIn' },
+    { value: 'Naukri', label: 'Naukri' },
+  ];
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 sticky top-24">
@@ -49,33 +56,27 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange, jobC
       <div className="space-y-6">
         {/* Platform Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Platform
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Platform</label>
           <div className="space-y-2">
-            {['all', 'indeed', 'linkedin', 'naukri.com', 'glassdoor'].map(platform => (
-              <label key={platform} className="flex items-center">
+            {platforms.map(platform => (
+              <label key={platform.value} className="flex items-center">
                 <input
                   type="radio"
                   name="platform"
-                  value={platform}
-                  checked={filters.platform === platform}
+                  value={platform.value}
+                  checked={filters.platform === platform.value}
                   onChange={(e) => handleFilterChange('platform', e.target.value)}
                   className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
-                <span className="ml-2 text-sm text-gray-700 capitalize">
-                  {platform === 'all' ? 'All Platforms' : platform}
-                </span>
+                <span className="ml-2 text-sm text-gray-700">{platform.label}</span>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Job Type Filter */}
+        {/* --- RESTORED: Job Type Filter --- */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Job Type
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Job Type</label>
           <div className="space-y-2">
             {['all', 'full-time', 'part-time', 'contract', 'internship'].map(type => (
               <label key={type} className="flex items-center">
@@ -95,13 +96,11 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange, jobC
           </div>
         </div>
 
-        {/* Experience Level Filter */}
+        {/* --- RESTORED: Experience Level Filter --- */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Experience Level
-          </label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Experience Level</label>
           <div className="space-y-2">
-            {['all', 'entry', 'mid', 'senior'].map(level => (
+            {['all', 'entry level', 'mid-senior level', 'senior'].map(level => (
               <label key={level} className="flex items-center">
                 <input
                   type="radio"
@@ -119,73 +118,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({ filters, onFilterChange, jobC
           </div>
         </div>
 
-        {/* Salary Range Filter */}
+        {/* --- RESTORED: Salary Range & Posted Date (UI ONLY) --- */}
+        {/* NOTE: These filters will not work until you update your backend API */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Salary Range
-          </label>
-          <div className="space-y-2">
-            {[
-              { value: 'all', label: 'All Salaries' },
-              { value: '0-50k', label: 'Under $50K' },
-              { value: '50k-100k', label: '$50K - $100K' },
-              { value: '100k-150k', label: '$100K - $150K' },
-              { value: '150k+', label: '$150K+' }
-            ].map(option => (
-              <label key={option.value} className="flex items-center">
-                <input
-                  type="radio"
-                  name="salaryRange"
-                  value={option.value}
-                  checked={filters.salaryRange === option.value}
-                  onChange={(e) => handleFilterChange('salaryRange', e.target.value)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {option.label}
-                </span>
-              </label>
-            ))}
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Salary Range</label>
+          <p className="text-xs text-gray-400 mb-2">(Backend not implemented)</p>
         </div>
 
-        {/* Posted Date Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
-            Posted Date
-          </label>
-          <div className="space-y-2">
-            {[
-              { value: 'all', label: 'Any time' },
-              { value: '1', label: 'Past 24 hours' },
-              { value: '7', label: 'Past week' },
-              { value: '30', label: 'Past month' }
-            ].map(option => (
-              <label key={option.value} className="flex items-center">
-                <input
-                  type="radio"
-                  name="postedDate"
-                  value={option.value}
-                  checked={filters.postedDate === option.value}
-                  onChange={(e) => handleFilterChange('postedDate', e.target.value)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">
-                  {option.label}
-                </span>
-              </label>
-            ))}
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Posted Date</label>
+          <p className="text-xs text-gray-400 mb-2">(Backend not implemented)</p>
         </div>
       </div>
-
-      {jobCount > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600">
-            Showing <span className="font-semibold">{jobCount}</span> job{jobCount !== 1 ? 's' : ''}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

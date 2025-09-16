@@ -1,30 +1,41 @@
+// src/types.ts
+
+// This interface matches the structure of the Job object from your backend API
 export interface Job {
-  id: string;
+  _id: string;
   title: string;
-  company: string;
+  companyName: string;
   location: string;
-  platform: string;
-  type: string; // full-time, part-time, contract
-  experienceLevel: string; // entry, mid, senior
-  salary?: string;
   description: string;
-  requirements: string[];
-  postedDate: string;
-  applicationUrl: string;
-  logoUrl?: string;
-  isRemote: boolean;
-  tags: string[];
+  descriptionHtml: string;
+  jobType: string | null;
+  experienceLevel: string | null;
+  salary: string | null;
+  skills: string[];
+  sourceUrl: string;
+  applyUrl: string;
+  sourcePlatform: 'Indeed' | 'LinkedIn' | 'Naukri';
+  companyLogoUrl: string | null;
+  postedOn: string; // ISO date string
+  createdAt: string;
+  updatedAt: string;
 }
 
+// This interface matches the filter state in App.tsx
 export interface SearchFilters {
   platform: string;
   jobType: string;
   experienceLevel: string;
-  salaryRange: string;
-  postedDate: string;
+  // These were in your mock setup but are not supported by the backend yet.
+  // You can add them back later if you update the backend API.
+  // salaryRange: string;
+  // postedDate: string;
 }
 
-export interface SearchParams {
-  title: string;
-  location: string;
+// This interface defines the shape of the data returned by the getAllJobs API call
+export interface JobsApiResponse {
+  jobs: Job[];
+  currentPage: number;
+  totalPages: number;
+  totalJobs: number;
 }

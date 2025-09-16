@@ -1,35 +1,47 @@
-import { useState } from 'react';
+// src/App.tsx
+
+import { useState, useEffect } from 'react';
 import SearchBar from './components/SearchBar';
 import JobCard from './components/JobCard';
 import FilterPanel from './components/FilterPanel';
 import Header from './components/Header';
 import JobDetails from './components/JobDetails';
 import { Job, SearchFilters } from './types';
-import { searchJobs, getJobById } from './services/jobService';
-import { Search, Filter, Loader2 } from 'lucide-react';
+import { getAllJobs, getJobById } from './services/jobService';
+import { Search, Filter, Loader2, Briefcase } from 'lucide-react';
 
 function App() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState({ title: '', location: '' });
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
   const [filters, setFilters] = useState<SearchFilters>({
     platform: 'all',
     jobType: 'all',
     experienceLevel: 'all',
-    salaryRange: 'all',
-    postedDate: 'all'
   });
+  const [showFilters, setShowFilters] = useState(false);
 
-  const handleSearch = async (title: string, location: string) => {
+  useEffect(() => {
+    if (searchPerformed) {
+      fetchJobs();
+    }
+  }, [filters, searchQuery, currentPage, searchPerformed]);
+
+  const fetchJobs = async () => {
     setLoading(true);
-    setSearchPerformed(true);
     try {
-      const results = await searchJobs(title, location);
-      setJobs(results);
-      setFilteredJobs(results);
+      const response = await getAllJobs({
+        search: searchQuery.title,
+        location: searchQuery.location,
+        page: currentPage,
+        ...filters,
+      });
+      setJobs(response.jobs);
+      setTotalJobs(response.totalJobs);
     } catch (error) {
       console.error('Search failed:', error);
     } finally {
@@ -37,31 +49,28 @@ function App() {
     }
   };
 
+  const handleSearch = (title: string, location: string) => {
+    setSearchQuery({ title, location });
+    setCurrentPage(1);
+    if (!searchPerformed) setSearchPerformed(true);
+  };
+
+  const handleShowAllJobs = () => {
+    setSearchQuery({ title: '', location: '' });
+    setCurrentPage(1);
+    if (!searchPerformed) setSearchPerformed(true);
+  };
+
+  const handlePlatformSearch = (platform: string) => {
+    setFilters({ ...filters, platform: platform });
+    setSearchQuery({ title: '', location: '' });
+    setCurrentPage(1);
+    setSearchPerformed(true);
+  };
+
   const handleFilterChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    
-    let filtered = jobs;
-    
-    if (newFilters.platform !== 'all') {
-      filtered = filtered.filter(job => job.platform.toLowerCase() === newFilters.platform);
-    }
-    
-    if (newFilters.jobType !== 'all') {
-      filtered = filtered.filter(job => job.type.toLowerCase() === newFilters.jobType);
-    }
-    
-    if (newFilters.experienceLevel !== 'all') {
-      filtered = filtered.filter(job => job.experienceLevel.toLowerCase() === newFilters.experienceLevel);
-    }
-    
-    if (newFilters.postedDate !== 'all') {
-      const days = parseInt(newFilters.postedDate);
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-      filtered = filtered.filter(job => new Date(job.postedDate) >= cutoffDate);
-    }
-    
-    setFilteredJobs(filtered);
+    setCurrentPage(1);
   };
 
   const handleJobSelect = async (jobId: string) => {
@@ -73,132 +82,113 @@ function App() {
     setSelectedJob(null);
   };
 
+  // --- CHANGE #1: Converted the array to objects to include an 'enabled' flag ---
+  const platforms = [
+    { name: 'Indeed', enabled: true },
+    { name: 'LinkedIn', enabled: true },
+    { name: 'Naukri', enabled: false } // Naukri is now disabled
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
-      
+      <Header onShowAllJobs={handleShowAllJobs} />
+
       <main className="container mx-auto px-4 py-8">
-        {/* Search Section */}
         <div className="mb-8">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
-              Find Your Dream Job
-            </h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Find Your Dream Job</h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Search across multiple job platforms in one place. Get aggregated results from Indeed, LinkedIn, Naukri.com, and more.
+              Search across multiple job platforms in one place.
             </p>
           </div>
-          
           <SearchBar onSearch={handleSearch} loading={loading} />
         </div>
 
-        {/* Results Section */}
-        {searchPerformed && (
+        {searchPerformed ? (
           <div className="flex flex-col lg:flex-row gap-6">
-            {/* Filter Panel */}
             <div className="lg:w-64 flex-shrink-0">
               <div className="lg:hidden mb-4">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
                 >
-                  <Filter className="w-4 h-4" />
-                  Filters
+                  <Filter className="w-4 h-4" /> Filters
                 </button>
               </div>
-              
               <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-                <FilterPanel 
+                <FilterPanel
                   filters={filters}
                   onFilterChange={handleFilterChange}
-                  jobCount={filteredJobs.length}
+                  jobCount={totalJobs}
                 />
               </div>
             </div>
-
-            {/* Job Listings */}
             <div className="flex-1">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    <span>Searching across platforms...</span>
-                  </div>
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span>Searching...</span>
                 </div>
-              ) : filteredJobs.length > 0 ? (
+              ) : jobs.length > 0 ? (
                 <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      {filteredJobs.length} Jobs Found
-                    </h2>
-                    <select className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
-                      <option>Sort by Relevance</option>
-                      <option>Sort by Date</option>
-                      <option>Sort by Salary</option>
-                    </select>
-                  </div>
-                  
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">{totalJobs} Jobs Found</h2>
                   <div className="space-y-4">
-                    {filteredJobs.map((job) => (
-                      <JobCard 
-                        key={job.id} 
-                        job={job} 
-                        onClick={() => handleJobSelect(job.id)}
-                      />
+                    {jobs.map((job) => (
+                      <JobCard key={job._id} job={job} onClick={() => handleJobSelect(job._id)} />
                     ))}
                   </div>
                 </>
-              ) : searchPerformed && !loading ? (
+              ) : (
                 <div className="text-center py-12">
                   <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No jobs found</h3>
-                  <p className="text-gray-600">Try adjusting your search criteria or filters.</p>
+                  <h3 className="text-lg font-semibold">No jobs found</h3>
+                  <p className="text-gray-600">Try adjusting your search criteria.</p>
                 </div>
-              ) : null}
+              )}
             </div>
           </div>
-        )}
-
-        {!searchPerformed && !loading && (
+        ) : (
           <div className="text-center py-16">
             <div className="bg-white rounded-2xl p-8 max-w-2xl mx-auto shadow-sm border border-gray-100">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-lg p-3 mb-2 inline-block">
-                    <Search className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h4 className="font-semibold text-sm">Indeed</h4>
-                </div>
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-lg p-3 mb-2 inline-block">
-                    <Search className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h4 className="font-semibold text-sm">LinkedIn</h4>
-                </div>
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-lg p-3 mb-2 inline-block">
-                    <Search className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h4 className="font-semibold text-sm">Naukri.com</h4>
-                </div>
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-lg p-3 mb-2 inline-block">
-                    <Search className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <h4 className="font-semibold text-sm">More</h4>
-                </div>
-              </div>
-              <p className="text-gray-600">
-                Start by searching for a job title above. We'll search across all major job platforms and show you aggregated results.
+              <p className="text-gray-600 mb-8">
+                Start by searching above, or browse jobs from a specific platform:
               </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* --- CHANGE #2: Added conditional logic for styling and functionality --- */}
+                {platforms.map(platform => (
+                  <button
+                    key={platform.name}
+                    onClick={() => platform.enabled && handlePlatformSearch(platform.name)}
+                    // Conditionally apply disabled styles
+                    className={`
+                      relative text-center p-4 rounded-lg border border-gray-200 transition-colors
+                      ${platform.enabled
+                        ? 'bg-gray-50 hover:bg-gray-100'
+                        : 'bg-gray-100 opacity-60 cursor-not-allowed'
+                      }
+                    `}
+                    disabled={!platform.enabled}
+                  >
+                    <div className="bg-blue-100 rounded-lg p-3 mb-2 inline-block">
+                      <Briefcase className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h4 className="font-semibold text-sm text-gray-800">{platform.name}</h4>
+                    {/* Add a "Coming Soon" badge if not enabled */}
+                    {!platform.enabled && (
+                      <span className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                        SOON
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </main>
 
-      {/* Job Details Modal */}
       {selectedJob && (
-        <JobDetails 
+        <JobDetails
           job={selectedJob}
           onClose={handleCloseJobDetails}
         />
