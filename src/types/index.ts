@@ -1,6 +1,7 @@
 // src/types.ts
 
-// This interface matches the structure of the Job object from your backend API
+// This interface now matches the structure of the Job object from your backend API
+// AND includes the optional 'isBookmarked' property for the frontend.
 export interface Job {
   _id: string;
   title: string;
@@ -19,6 +20,7 @@ export interface Job {
   postedOn: string; // ISO date string
   createdAt: string;
   updatedAt: string;
+  isBookmarked?: boolean; // <-- THIS IS THE FIX
 }
 
 // This interface matches the filter state in App.tsx
@@ -26,10 +28,6 @@ export interface SearchFilters {
   platform: string;
   jobType: string;
   experienceLevel: string;
-  // These were in your mock setup but are not supported by the backend yet.
-  // You can add them back later if you update the backend API.
-  // salaryRange: string;
-  // postedDate: string;
 }
 
 // This interface defines the shape of the data returned by the getAllJobs API call
@@ -38,4 +36,12 @@ export interface JobsApiResponse {
   currentPage: number;
   totalPages: number;
   totalJobs: number;
+}
+
+// This is the blueprint for a User object
+export interface User {
+  _id: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
 }

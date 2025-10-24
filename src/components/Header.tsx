@@ -1,17 +1,20 @@
-// src/components/Header.tsx
-
 import React from 'react';
-import { Briefcase, Github, Linkedin } from 'lucide-react';
+import { Briefcase, Github, Linkedin, LogOut, UserCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+// The import path has been corrected to use the alias.
+import { useAuth } from '../context/AuthContext';
 
-// --- CHANGE #1: Define the props the Header will accept ---
-interface HeaderProps {
-  onShowAllJobs: () => void;
-}
+const Header: React.FC = () => {
+  const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const navigate = useNavigate();
 
-const Header: React.FC<HeaderProps> = ({ onShowAllJobs }) => {
   const handleSignIn = () => {
-    alert('Sign-in functionality will be added here!');
+    navigate('/auth');
   };
+
+  const handleShowAllJobs = () => {
+    navigate('/');
+  }
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
@@ -28,24 +31,27 @@ const Header: React.FC<HeaderProps> = ({ onShowAllJobs }) => {
           </a>
 
           <nav className="hidden md:flex items-center gap-6">
-            {/* --- CHANGE #2: Changed from a link to a button that calls the prop function --- */}
             <button
-              onClick={onShowAllJobs}
+              onClick={handleShowAllJobs}
               className="text-gray-600 hover:text-gray-900 transition-colors"
             >
               Search Jobs
             </button>
-            <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Saved Jobs
-            </a>
-            <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Profile
-            </a>
+            {/* {isAuthenticated && (
+              <>
+                <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Saved Jobs
+                </a>
+                <a href="#" className="text-gray-600 hover:text-gray-900 transition-colors">
+                  Profile
+                </a>
+              </>
+            )} */}
           </nav>
 
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com"
+              href="https://github.com/vinsin21"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -54,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ onShowAllJobs }) => {
               <Github className="w-5 h-5" />
             </a>
             <a
-              href="https://linkedin.com"
+              href="https://linkedin.com/in/vineet21"
               target="_blank"
               rel="noopener noreferrer"
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -62,12 +68,29 @@ const Header: React.FC<HeaderProps> = ({ onShowAllJobs }) => {
             >
               <Linkedin className="w-5 h-5" />
             </a>
-            <button
-              onClick={handleSignIn}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
-            >
-              Sign In
-            </button>
+
+            {isLoading ? (
+              <div className="w-24 h-9 animate-pulse bg-gray-200 rounded-lg"></div>
+            ) : isAuthenticated ? (
+              <div className="flex items-center gap-3">
+                <UserCircle className="w-6 h-6 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700 hidden lg:block">{user?.email}</span>
+                <button
+                  onClick={logout}
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleSignIn}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -76,3 +99,4 @@ const Header: React.FC<HeaderProps> = ({ onShowAllJobs }) => {
 };
 
 export default Header;
+
